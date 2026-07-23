@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>아이보스 대행의뢰 공고 트래커</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Pretendard', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: #F8FAFC;
+    color: #0F172A;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: #3B82F6; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .container { max-width: 1280px; margin: 0 auto; padding: 24px 20px 40px; }
+
+  /* 히어로 헤더 */
+  .hero {
+    padding: 40px 20px 28px;
+    background: linear-gradient(135deg, #3B82F6 0%, #6366F1 100%);
+    color: #fff;
+    text-align: center;
+  }
+  .hero h1 { margin: 0 0 8px; font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  .hero .subtitle { font-size: 14px; opacity: 0.92; }
+  .hero .subtitle a { color: #fff; text-decoration: underline; }
+  .hero .last-update { margin-top: 6px; font-size: 12px; opacity: 0.8; }
+
+  /* 필터 섹션 */
+  .filters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
+    background: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+  }
+  .filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .filter-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748B;
+    margin-right: 4px;
+    letter-spacing: 0.5px;
+  }
+  .filter-btn {
+    padding: 6px 12px;
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-family: inherit;
+  }
+  .filter-btn:hover { background: #E2E8F0; }
+  .filter-btn.active {
+    background: #3B82F6;
+    color: #FFFFFF;
+    border-color: #3B82F6;
+    box-shadow: 0 1px 3px rgba(59,130,246,0.4);
+  }
+  .filter-btn .count {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 6px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .filter-btn.active .count { background: rgba(255,255,255,0.25); }
+
+  /* 날짜 헤더 & 요약 */
+  .date-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0 12px;
+    padding: 0 4px;
+  }
+  .date-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0F172A;
+  }
+  .summary-bar {
+    padding: 12px 16px;
+    background: #FFFFFF;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #475569;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  /* 카드 그리드 */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 1024px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 640px)  { .card-grid { grid-template-columns: 1fr; } }
+
+  .card {
+    position: relative;
+    overflow: hidden;
+    background: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  }
+  .card[hidden] { display: none !important; }
+
+  .new-ribbon {
+    position: absolute;
+    top: 10px;
+    left: -30px;
+    width: 100px;
+    background: #EF4444;
+    color: white;
+    text-align: center;
+    transform: rotate(-45deg);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 0;
+    letter-spacing: 1px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  .card-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 4px;
+    padding-left: 32px; /* 리본 겹침 방지 */
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.85; }
+  }
+
+  .one-line {
+    font-size: 19px;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 12px 0 8px;
+    line-height: 1.4;
+  }
+  .meta-line {
+    font-size: 13px;
+    color: #94A3B8;
+    margin-bottom: 12px;
+  }
+  .detail-summary {
+    font-size: 14px;
+    color: #475569;
+    line-height: 1.6;
+    margin: 0 0 16px;
+    flex-grow: 1;
+  }
+  .card-footer { margin-top: auto; }
+  .cta {
+    display: inline-block;
+    padding: 8px 14px;
+    background: #3B82F6;
+    color: white !important;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.15s ease;
+  }
+  .cta:hover { background: #2563EB; text-decoration: none; }
+
+  /* 빈 결과 안내 */
+  .empty-state {
+    grid-column: 1 / -1;
+    padding: 60px 20px;
+    text-align: center;
+    color: #94A3B8;
+    font-size: 14px;
+    display: none;
+  }
+  .empty-state.visible { display: block; }
+
+  /* 푸터 */
+  .site-footer {
+    text-align: center;
+    padding: 32px 16px;
+    color: #94A3B8;
+    font-size: 0.85rem;
+  }
+
+  /* 다크모드 */
+  @media (prefers-color-scheme: dark) {
+    body { background: #0F172A; color: #F1F5F9; }
+    .filters, .summary-bar, .card {
+      background: #1E293B;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+    .date-header h2 { color: #F1F5F9; }
+    .filter-btn { background: #334155; color: #CBD5E1; }
+    .filter-btn:hover { background: #475569; }
+    .filter-label { color: #94A3B8; }
+    .one-line { color: #F1F5F9; }
+    .meta-line { color: #94A3B8; }
+    .detail-summary { color: #CBD5E1; }
+    .summary-bar { color: #CBD5E1; }
+    .empty-state { color: #64748B; }
+    .site-footer { color: #64748B; }
+    /* 카테고리/작성자 배지는 pastel 그대로 유지 (라이트에서 확정된 매핑) */
+  }
+
+  /* --- past-section (v1 카드 스키마 호환용 최소 스타일) --- */
+  .past-section { margin-top: 32px; }
+  .date-header .date-label { font-size: 20px; font-weight: 700; }
+  .date-header .date-stats { display: inline-flex; gap: 6px; flex-wrap: wrap; margin-left: 12px; vertical-align: middle; }
+  .date-header .stat-chip {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #F1F5F9;
+    color: #475569;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .date-header .stat-chip.stat-new { background: #FEE2E2; color: #DC2626; }
+  .date-header .stat-chip.stat-agency { background: #FEF3C7; color: #B45309; }
+  .date-header .stat-chip.stat-advertiser { background: #DBEAFE; color: #1E40AF; }
+
+  /* v1 카드 내부 하위요소 스타일 */
+  .card .card-labels { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; padding-left: 32px; }
+  .card .one-line-summary {
+    font-size: 19px; font-weight: 700; color: #0F172A;
+    margin: 12px 0 8px; line-height: 1.4;
+  }
+  .card .meta {
+    font-size: 13px; color: #94A3B8; margin-bottom: 12px;
+  }
+  .card .poster-evidence {
+    font-size: 12px; color: #94A3B8; margin-top: -8px; margin-bottom: 12px;
+    font-style: italic;
+  }
+  .card .btn-link {
+    display: inline-block; padding: 8px 14px; background: #3B82F6;
+    color: #fff !important; border-radius: 6px; text-decoration: none;
+    font-size: 13px; font-weight: 600;
+  }
+  .card .btn-link:hover { background: #2563EB; text-decoration: none; }
+
+  /* v1 배지 색상 (카테고리별 서픽스) — 다크모드에서도 동일한 파스텔 유지 */
+  .badge.cat-cpa            { background: #FCE7F3; color: #BE185D; }
+  .badge.cat-sns            { background: #EFF6FF; color: #1D4ED8; }
+  .badge.cat-imc            { background: #FEF3C7; color: #B45309; }
+  .badge.cat-ytb            { background: #FEE2E2; color: #DC2626; }
+  .badge.cat-age            { background: #F3E8FF; color: #7C3AED; }
+  .badge.cat-bcv            { background: #DCFCE7; color: #15803D; }
+  .badge.cat-seo            { background: #E0F2FE; color: #0284C7; }
+  .badge.cat-sal            { background: #FEF9C3; color: #A16207; }
+  .badge.cat-src            { background: #FED7AA; color: #C2410C; }
+  .badge.cat-etc            { background: #F1F5F9; color: #475569; }
+  .badge.cat-lad            { background: #E0F2FE; color: #0284C7; }
+  .badge.cat-kwd            { background: #EFF6FF; color: #1D4ED8; }
+
+  /* 작성자 배지 */
+  .badge.poster-agency      { background: #FEF3C7; color: #B45309; animation: pulse 2s ease-in-out infinite; }
+  .badge.poster-advertiser  { background: #DBEAFE; color: #1E40AF; }
+  .badge.poster-unknown     { background: #F1F5F9; color: #64748B; }
+
+  /* D-day 배지 */
+  .badge.dday-urgent { background: #FEE2E2; color: #EF4444; }
+  .badge.dday-warn   { background: #FEF3C7; color: #F59E0B; }
+  .badge.dday-normal { background: #F1F5F9; color: #94A3B8; }
+
+  /* 다크모드 보정 */
+  @media (prefers-color-scheme: dark) {
+    .date-header .stat-chip { background: #334155; color: #CBD5E1; }
+    .card .one-line-summary { color: #F1F5F9; }
+    .card .meta { color: #94A3B8; }
+    .card .poster-evidence { color: #64748B; }
+  }
+</style>
+</head>
+<body>
+<header class="hero">
+<h1>아이보스 대행의뢰 공고 트래커</h1>
+<div class="subtitle">
+<a href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">아이보스 대행의뢰 게시판 원본 →</a>
+</div>
+<div class="last-update">마지막 업데이트: 2026-07-23 09:00 KST</div>
+</header>
+<div class="container">
+<section aria-label="필터" class="filters">
+<div class="filter-group">
+<span class="filter-label">카테고리</span>
+<button class="filter-btn cat-btn active" data-filter="category" data-value="__ALL__">전체 <span class="count">17</span></button>
+<button class="filter-btn cat-btn" data-filter="category" data-value="SNS마케팅">SNS마케팅 <span class="count">3</span></button>
+<button class="filter-btn cat-btn" data-filter="category" data-value="기타">기타 <span class="count">3</span></button>
+<button class="filter-btn cat-btn" data-filter="category" data-value="통합광고대행">통합광고대행 <span class="count">3</span></button>
+<button class="filter-btn cat-btn" data-filter="category" data-value="유튜브·영상·PPL">유튜브·영상·PPL <span class="count">2</span></button>
+<button class="filter-btn cat-btn" data-filter="category" data-value="상품 판매요청">상품 판매요청 <span class="count">1</span></button>
+<button class="filter-btn cat-btn" data-filter="category" data-value="대대행사">대대행사 <span class="count">1</span></button>
+<button class="filter-btn cat-btn" data-filter="category" data-value="블로그·카페·바이럴">블로그·카페·바이럴 <span class="count">1</span></button>
+<button class="filter-btn cat-btn" data-filter="category" data-value="검색최적화·SEO">검색최적화·SEO <span class="count">1</span></button>
+<button class="filter-btn cat-btn" data-filter="category" data-value="상품 소싱요청">상품 소싱요청 <span class="count">1</span></button>
+<button class="filter-btn cat-btn" data-filter="category" data-value="CPA·CPS">CPA·CPS <span class="count">1</span></button>
+</div>
+<div class="filter-group">
+<span class="filter-label">작성자</span>
+<button class="filter-btn poster-btn active" data-filter="poster" data-value="__ALL__">전체 작성자</button>
+<button class="filter-btn poster-btn" data-filter="poster" data-value="대행사">🏢 대행사만 <span class="count">1</span></button>
+<button class="filter-btn poster-btn" data-filter="poster" data-value="광고주">📢 광고주만 <span class="count">5</span></button>
+</div>
+<div class="filter-group">
+<span class="filter-label">신규</span>
+<button class="filter-btn new-btn" data-new-only="">NEW만 보기 <span class="count">17</span></button>
+</div>
+</section>
+<div class="date-header">
+<h2>📅 2026-07-23 (목) · 오전 9:00 KST</h2>
+</div>
+<div class="summary-bar">총 17건 · 신규 17건 · 🏢 대행사 1건 · 📢 광고주 5건 · ❓ 미상 11건</div>
+<div class="card-grid" id="card-grid">
+<article class="card" data-category="SNS마케팅" data-new="true" data-poster="미상">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#EFF6FF;color:#1D4ED8;">SNS마케팅</span>
+<span class="badge badge-poster" style="background:#F1F5F9;color:#64748B;">❓ 미상</span>
+<span class="badge badge-dday" style="background:#FEE2E2;color:#EF4444;">D-3</span>
+</div>
+<h2 class="one-line">엔터테인먼트 SNS마케팅 대행 의뢰 (예산 최대 1,000만원)</h2>
+<div class="meta-line">엔터테인먼트 · 최소 10만원 ~ 최대 1,000만원 · 등록 07.28</div>
+<p class="detail-summary">엔터테인먼트 업종에서 SNS마케팅 대행을 희망하며, 예산 규모는 최대 1,000만원 수준입니다. 마감이 3일 남은 촉박한 마감 건이므로 빠른 검토가 필요해 보입니다. 해당 공고는 7월 28일에 등록되었습니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="상품 판매요청" data-new="true" data-poster="미상">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#FEF9C3;color:#A16207;">상품 판매요청</span>
+<span class="badge badge-poster" style="background:#F1F5F9;color:#64748B;">❓ 미상</span>
+<span class="badge badge-dday" style="background:#F1F5F9;color:#94A3B8;">D-31</span>
+</div>
+<h2 class="one-line">식/음료 상품 판매 대행 의뢰 (예산 최대 300만원)</h2>
+<div class="meta-line">식/음료 · ~ 최대 300만원 · 등록 07.28</div>
+<p class="detail-summary">식/음료 업종의 상품 판매 요청 건으로, 예산은 최대 300만원 규모입니다. 7월 28일에 등록되었으며 마감까지는 31일로 여유가 있는 편입니다. 소규모 예산 기반의 대행 의뢰입니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="SNS마케팅" data-new="true" data-poster="미상">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#EFF6FF;color:#1D4ED8;">SNS마케팅</span>
+<span class="badge badge-poster" style="background:#F1F5F9;color:#64748B;">❓ 미상</span>
+<span class="badge badge-dday" style="background:#FEE2E2;color:#EF4444;">D-3</span>
+</div>
+<h2 class="one-line">교육 브랜드 SNS마케팅 대행 의뢰 (예산 최대 300만원)</h2>
+<div class="meta-line">교육 · 최소 200만원 ~ 최대 300만원 · 등록 07.28</div>
+<p class="detail-summary">교육 업종에서 SNS마케팅 대행사를 찾고 있으며 예산은 200만원에서 300만원 사이입니다. 7월 28일 등록된 공고로 마감이 3일밖에 남지 않은 촉박한 마감 상태입니다. 상세 마케팅 실행 역량이 중요할 것으로 보입니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="기타" data-new="true" data-poster="미상">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#F1F5F9;color:#475569;">기타</span>
+<span class="badge badge-poster" style="background:#F1F5F9;color:#64748B;">❓ 미상</span>
+<span class="badge badge-dday" style="background:#FEF3C7;color:#F59E0B;">D-7</span>
+</div>
+<h2 class="one-line">인터넷서비스 기타 대행 의뢰 (예산 최대 50만원)</h2>
+<div class="meta-line">인터넷서비스 · 최소 10만원 ~ 최대 50만원 · 등록 07.28</div>
+<p class="detail-summary">인터넷서비스 업종의 기타 카테고리 대행 의뢰이며, 예산은 최대 50만원의 소액 규모입니다. 7월 28일에 등록되었으며 마감 기한은 7일이 남아 있습니다. 단순 업무나 단기 프로젝트로 추정됩니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="유튜브·영상·PPL" data-new="true" data-poster="미상">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#FEE2E2;color:#DC2626;">유튜브·영상·PPL</span>
+<span class="badge badge-poster" style="background:#F1F5F9;color:#64748B;">❓ 미상</span>
+<span class="badge badge-dday" style="background:#FEE2E2;color:#EF4444;">D-3</span>
+</div>
+<h2 class="one-line">일반소비재 유튜브·영상·PPL 대행 의뢰 (예산 최대 1,000만원)</h2>
+<div class="meta-line">일반소비재 · 최소 10만원 ~ 최대 1,000만원 · 등록 07.28</div>
+<p class="detail-summary">일반소비재 업종에서 유튜브, 영상 제작 및 PPL 대행을 의뢰하며 예산은 최대 1,000만원입니다. 7월 28일에 등록된 건으로 D-3인 촉박한 마감 공고입니다. 영상 콘텐츠 관련 실행력이 핵심인 의뢰로 보입니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="기타" data-new="true" data-poster="미상">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#F1F5F9;color:#475569;">기타</span>
+<span class="badge badge-poster" style="background:#F1F5F9;color:#64748B;">❓ 미상</span>
+<span class="badge badge-dday" style="background:#F1F5F9;color:#94A3B8;">D-31</span>
+</div>
+<h2 class="one-line">교육 업종 기타 대행 의뢰 (예산 최대 10만원)</h2>
+<div class="meta-line">교육 · 최소 10만원 ~ 최대 10만원 · 등록 07.28</div>
+<p class="detail-summary">교육 업종의 기타 분류 대행 의뢰로, 예산 규모는 10만원의 매우 적은 금액입니다. 7월 28일에 등록되었으며 마감까지 31일로 충분한 기한이 남아 있습니다. 단순 조력이나 매우 가벼운 과업으로 보입니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="통합광고대행" data-new="true" data-poster="미상">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#FEF3C7;color:#B45309;">통합광고대행</span>
+<span class="badge badge-poster" style="background:#F1F5F9;color:#64748B;">❓ 미상</span>
+<span class="badge badge-dday" style="background:#FEE2E2;color:#EF4444;">D-3</span>
+</div>
+<h2 class="one-line">교육 분야 통합광고대행 의뢰 (예산 최대 1,000만원)</h2>
+<div class="meta-line">교육 · 최소 700만원 ~ 최대 1,000만원 · 등록 07.28</div>
+<p class="detail-summary">교육 업종에서 통합광고대행 서비스를 요청하며, 최대 1,000만원의 예산을 배정했습니다. 7월 28일 등록되었으며 마감 기한이 3일 남은 촉박한 마감 공고입니다. 통합적인 광고 운영 역량이 요구됩니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="대대행사" data-new="true" data-poster="대행사">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#F3E8FF;color:#7C3AED;">대대행사</span>
+<span class="badge badge-poster" style="background:#FEF3C7;color:#B45309;animation:pulse 2s ease-in-out infinite;">🏢 대행사</span>
+<span class="badge badge-dday" style="background:#F1F5F9;color:#94A3B8;">D-18</span>
+</div>
+<h2 class="one-line">패션 브랜드 대대행사 모집 의뢰 (예산 최대 700만원)</h2>
+<div class="meta-line">패션 · 최소 100만원 ~ 최대 700만원 · 등록 07.28</div>
+<p class="detail-summary">패션 업종에서 대대행사를 찾는 공고이며, 예산은 100만원에서 700만원 사이입니다. 7월 28일에 등록되었으며 마감까지는 18일의 기한이 남아 있습니다. 대행사가 특정 과업을 실행할 협력사를 찾는 형태입니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="유튜브·영상·PPL" data-new="true" data-poster="광고주">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#FEE2E2;color:#DC2626;">유튜브·영상·PPL</span>
+<span class="badge badge-poster" style="background:#DBEAFE;color:#1E40AF;">📢 광고주</span>
+<span class="badge badge-dday" style="background:#F1F5F9;color:#94A3B8;">D-31</span>
+</div>
+<h2 class="one-line">유튜브·영상·PPL 대규모 대행 의뢰 (예산 최대 1억원)</h2>
+<div class="meta-line">기타 · 최소 2,000만원 ~ 최대 1억원 · 등록 07.28</div>
+<p class="detail-summary">기타 업종에서 유튜브 및 영상 PPL 대행을 의뢰하며, 예산은 최소 2,000만원에서 최대 1억원에 달하는 대규모 프로젝트입니다. 7월 28일에 등록되었고 마감은 31일 후로 여유가 있습니다. 고예산 기반의 기업형 의뢰로 추정됩니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="SNS마케팅" data-new="true" data-poster="미상">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#EFF6FF;color:#1D4ED8;">SNS마케팅</span>
+<span class="badge badge-poster" style="background:#F1F5F9;color:#64748B;">❓ 미상</span>
+<span class="badge badge-dday" style="background:#FEE2E2;color:#EF4444;">D-3</span>
+</div>
+<h2 class="one-line">병원 브랜드 SNS마케팅 대행 의뢰 (예산 최대 1,000만원)</h2>
+<div class="meta-line">병원 · 최소 400만원 ~ 최대 1,000만원 · 등록 07.28</div>
+<p class="detail-summary">병원 업종에서 SNS마케팅 대행을 요청하고 있으며, 예산은 최대 1,000만원 규모입니다. 7월 28일 등록되었으며 마감이 3일 남은 촉박한 마감 건입니다. 의료 분야 마케팅 규제에 전문성이 있는 대행사가 적합해 보입니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="통합광고대행" data-new="true" data-poster="광고주">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#FEF3C7;color:#B45309;">통합광고대행</span>
+<span class="badge badge-poster" style="background:#DBEAFE;color:#1E40AF;">📢 광고주</span>
+<span class="badge badge-dday" style="background:#FEE2E2;color:#EF4444;">D-3</span>
+</div>
+<h2 class="one-line">식/음료 대규모 통합광고대행 의뢰 (예산 최대 1억원)</h2>
+<div class="meta-line">식/음료 · 최소 1,000만원 ~ 최대 1억원 · 등록 07.28</div>
+<p class="detail-summary">식/음료 업종의 통합광고대행 건으로, 예산은 최소 1,000만원에서 최대 1억원에 이르는 대형 의뢰입니다. 7월 28일에 등록되었으며 마감이 3일 남은 매우 촉박한 마감 상태입니다. 규모가 큰 프로젝트인 만큼 빠른 제안이 필요합니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="기타" data-new="true" data-poster="광고주">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#F1F5F9;color:#475569;">기타</span>
+<span class="badge badge-poster" style="background:#DBEAFE;color:#1E40AF;">📢 광고주</span>
+</div>
+<h2 class="one-line">부동산 대규모 기타 대행 의뢰 (예산 최대 7,000만원)</h2>
+<div class="meta-line">부동산 · 최소 2,000만원 ~ 최대 7,000만원 · 등록 07.28</div>
+<p class="detail-summary">부동산 업종에서 진행하는 기타 대행 의뢰로, 최대 7,000만원의 상당한 예산이 책정되어 있습니다. 7월 28일에 등록되었으며 현재 D-day 정보가 제공되지 않았습니다. 예산 규모로 보아 비중 있는 마케팅 과업으로 판단됩니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="블로그·카페·바이럴" data-new="true" data-poster="미상">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#DCFCE7;color:#15803D;">블로그·카페·바이럴</span>
+<span class="badge badge-poster" style="background:#F1F5F9;color:#64748B;">❓ 미상</span>
+<span class="badge badge-dday" style="background:#FEF3C7;color:#F59E0B;">D-6</span>
+</div>
+<h2 class="one-line">블로그·카페·바이럴 대행 의뢰 (예산 최대 2,000만원)</h2>
+<div class="meta-line">기타 · 최소 500만원 ~ 최대 2,000만원 · 등록 07.28</div>
+<p class="detail-summary">기타 업종의 바이럴 마케팅 대행 의뢰이며, 예산 규모는 최대 2,000만원입니다. 7월 28일 등록되어 마감까지 6일의 기한이 남아 있습니다. 블로그 및 카페 중심의 확산형 마케팅 역량이 중요할 것으로 보입니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="검색최적화·SEO" data-new="true" data-poster="미상">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#E0F2FE;color:#0284C7;">검색최적화·SEO</span>
+<span class="badge badge-poster" style="background:#F1F5F9;color:#64748B;">❓ 미상</span>
+<span class="badge badge-dday" style="background:#FEE2E2;color:#EF4444;">D-3</span>
+</div>
+<h2 class="one-line">교육 업종 검색최적화·SEO 대행 의뢰 (예산 최대 50만원)</h2>
+<div class="meta-line">교육 · 최소 10만원 ~ 최대 50만원 · 등록 07.28</div>
+<p class="detail-summary">교육 업종에서 검색최적화(SEO) 대행을 희망하며, 예산은 최대 50만원의 소규모입니다. 7월 28일에 등록되었으며 마감까지 3일 남은 촉박한 마감 상황입니다. 검색 노출 최적화를 위한 효율적인 집행이 요구됩니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="통합광고대행" data-new="true" data-poster="미상">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#FEF3C7;color:#B45309;">통합광고대행</span>
+<span class="badge badge-poster" style="background:#F1F5F9;color:#64748B;">❓ 미상</span>
+<span class="badge badge-dday" style="background:#F1F5F9;color:#94A3B8;">D-30</span>
+</div>
+<h2 class="one-line">식/음료 통합광고대행 의뢰 (예산 최대 2,000만원)</h2>
+<div class="meta-line">식/음료 · 최소 500만원 ~ 최대 2,000만원 · 등록 07.27</div>
+<p class="detail-summary">식/음료 업종에서 통합광고대행을 요청하며 예산은 최대 2,000만원 규모입니다. 7월 27일에 등록된 공고로 마감까지 30일의 넉넉한 기한이 남아 있습니다. 전반적인 브랜딩 및 광고 운영 능력이 필요해 보입니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="상품 소싱요청" data-new="true" data-poster="광고주">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#FED7AA;color:#C2410C;">상품 소싱요청</span>
+<span class="badge badge-poster" style="background:#DBEAFE;color:#1E40AF;">📢 광고주</span>
+<span class="badge badge-dday" style="background:#F1F5F9;color:#94A3B8;">D-29</span>
+</div>
+<h2 class="one-line">일반소비재 상품 소싱 대규모 의뢰 (예산 최대 1억원)</h2>
+<div class="meta-line">일반소비재 · 최소 10만원 ~ 최대 1억원 · 등록 07.26</div>
+<p class="detail-summary">일반소비재 업종의 상품 소싱 요청 건으로, 예산 범위가 최대 1억원에 달하는 광범위한 프로젝트입니다. 7월 26일에 등록되었으며 마감은 29일의 여유가 있습니다. 유통 및 소싱 인프라를 갖춘 파트너를 찾는 것으로 보입니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<article class="card" data-category="CPA·CPS" data-new="true" data-poster="광고주">
+<div class="new-ribbon">NEW</div>
+<div class="card-header">
+<span class="badge badge-category" style="background:#FCE7F3;color:#BE185D;">CPA·CPS</span>
+<span class="badge badge-poster" style="background:#DBEAFE;color:#1E40AF;">📢 광고주</span>
+<span class="badge badge-dday" style="background:#FEE2E2;color:#EF4444;">D-3</span>
+</div>
+<h2 class="one-line">전문서비스 CPA·CPS 대형 대행 의뢰 (예산 최대 1억원)</h2>
+<div class="meta-line">전문서비스 · 최소 1,000만원 ~ 최대 1억원 · 등록 07.26</div>
+<p class="detail-summary">전문서비스 업종에서 성과형 광고인 CPA·CPS 대행을 의뢰하며, 최대 1억원의 예산을 제시했습니다. 7월 26일 등록되었으며 마감이 3일 남은 촉박한 마감 공고입니다. 고예산이 투입되는 만큼 확실한 퍼포먼스 창출 능력이 요구됩니다.</p>
+<div class="card-footer">
+<a class="cta" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</article>
+<div class="empty-state" id="empty-state">조건에 맞는 공고가 없습니다.</div>
+</div><div class="section past-section">
+<div class="date-header">
+<span class="date-label">📅 2026-07-22 (수)</span>
+<div class="date-stats">
+<span class="stat-chip stat-total">총 10건</span>
+<span class="stat-chip stat-new">신규 10건</span>
+<span class="stat-chip stat-agency">대행사 0건</span>
+<span class="stat-chip stat-advertiser">광고주 10건</span>
+</div>
+</div>
+<div class="card-grid">
+<div class="card" data-category="CPA·CPS" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-cpa">CPA·CPS</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-normal dday-badge">D-9</span>
+</div>
+<div class="one-line-summary">인터넷서비스 업종 CPA·CPS 성과형 마케팅 대행, 월 10~300만</div>
+<div class="meta">🏭 인터넷서비스  ·  💰 월간최소 10만원 ~ 최대 300만원  ·  📅 2026-07-22</div>
+<div class="detail-summary">인터넷서비스 업종의 브랜드에서 CPA 및 CPS 방식의 성과형 마케팅 대행을 요청하는 공고입니다. 월간 예산은 최소 10만 원에서 최대 300만 원 규모로 책정되어 있습니다. 계약 형태는 월간 단위 성과 기반으로 보이며, 마감 기한은 D-9일입니다.</div>
+<div class="poster-evidence">📌 전형적인 업종별 성과형 마케팅 의뢰 패턴을 보이며, 대행사 모집 문구가 없어 광고주로 판단됩니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="블로그·카페·바이럴" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-blog">블로그·카페·바이럴</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-warning dday-badge">D-5</span>
+</div>
+<div class="one-line-summary">기타 업종 블로그·카페 바이럴 마케팅 대행, 월 100~200만</div>
+<div class="meta">🏭 기타  ·  💰 월간최소 100만원 ~ 최대 200만원  ·  📅 2026-07-22</div>
+<div class="detail-summary">기타 업종의 광고주가 블로그, 카페를 활용한 바이럴 마케팅 서비스를 원하고 있습니다. 예산 규모는 월간 100만 원에서 200만 원 사이로 소규모 바이럴 캠페인에 적합한 수준입니다. 현재 마감 기한은 D-5일로 얼마 남지 않았습니다.</div>
+<div class="poster-evidence">📌 특정 업종의 바이럴 마케팅을 직접 의뢰하는 형태로 보여 광고주로 판단됩니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="CPA·CPS" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-cpa">CPA·CPS</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-urgent dday-badge">D-2</span>
+</div>
+<div class="one-line-summary">법률 사무소 CPA 성과형 마케팅 파트너 모집, 월 500~1500만</div>
+<div class="meta">🏭 법률  ·  💰 월간최소 500만원 ~ 최대 1,500만원  ·  📅 2026-07-22</div>
+<div class="detail-summary">법률 업종의 브랜드가 고객 유입 및 상담 전환을 위한 CPA/CPS 마케팅 대행사를 찾고 있습니다. 예산은 월간 500만 원에서 1,500만 원 수준으로 비교적 높은 편입니다. 마감 기한이 D-2일로 매우 임박하여 빠른 지원이 필요합니다.</div>
+<div class="poster-evidence">📌 법률 업종의 전형적인 리드 생성 목적의 직접 의뢰 공고로 판단됩니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="블로그·카페·바이럴" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-blog">블로그·카페·바이럴</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-normal dday-badge">D-31</span>
+</div>
+<div class="one-line-summary">기타 업종 바이럴 마케팅 대행 파트너 모집, 월 50~300만</div>
+<div class="meta">🏭 기타  ·  💰 월간최소 50만원 ~ 최대 300만원  ·  📅 2026-07-22</div>
+<div class="detail-summary">블로그, 카페 등 온라인 커뮤니티 바이럴 마케팅을 대행할 파트너를 모집하는 공고입니다. 예산은 월 50만 원에서 300만 원 사이의 가변적인 구조입니다. 마감 기한은 D-31일로 여유 있게 제안을 받고 있습니다.</div>
+<div class="poster-evidence">📌 서비스 유형과 예산 규모상 브랜드의 직접 마케팅 대행 요청으로 판단됩니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="CPA·CPS" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-cpa">CPA·CPS</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-normal dday-badge">D-30</span>
+</div>
+<div class="one-line-summary">법률 업종 건당 40~100만 원 고단가 CPA 마케팅 의뢰</div>
+<div class="meta">🏭 법률  ·  💰 성과당최소 40만원 ~ 최대 100만원  ·  📅 2026-07-22</div>
+<div class="detail-summary">법률 업종에서 성과당 비용(CPA)을 지불하는 형태의 마케팅 대행을 요청하고 있습니다. 성과 1건당 최소 40만 원에서 최대 100만 원까지의 고단가를 제시하고 있습니다. 마감 기한은 D-30일로 설정되어 있습니다.</div>
+<div class="poster-evidence">📌 성과당 비용을 명시하여 실행사를 직접 찾는 광고주의 전형적인 공고입니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="유튜브·영상·PPL" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-youtube">유튜브·영상·PPL</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-urgent dday-badge">D-1</span>
+</div>
+<div class="one-line-summary">식/음료 브랜드 유튜브/영상 PPL 대행 의뢰, 건당 30만</div>
+<div class="meta">🏭 식/음료  ·  💰 건당최소 30만원 ~ 최대 30만원  ·  📅 2026-07-22</div>
+<div class="detail-summary">식/음료 업종의 브랜드가 유튜브 영상 제작 및 PPL(간접광고) 서비스를 요청하는 공고입니다. 건당 30만 원의 고정 예산으로 소규모 영상 또는 브랜디드 콘텐츠를 타겟팅하고 있습니다. 마감 기한은 D-1일로 즉시 대응이 필요합니다.</div>
+<div class="poster-evidence">📌 단일 건당 예산이 명확하며 특정 서비스(영상)를 직접 의뢰하는 광고주로 보입니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="웹사이트 제작" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-web">웹사이트 제작</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-normal dday-badge">D-16</span>
+</div>
+<div class="one-line-summary">법률 업종 마케팅용 웹사이트 제작 의뢰, 건당 100만 이상</div>
+<div class="meta">🏭 법률  ·  💰 건당최소 100만원  ·  📅 2026-07-22</div>
+<div class="detail-summary">법률 분야 마케팅을 위한 웹사이트 제작 전문사를 모집하는 공고입니다. 예산은 건당 최소 100만 원부터 시작하며 요구 사항에 따라 증액 가능성이 있습니다. 마감 기한은 D-16일까지입니다.</div>
+<div class="poster-evidence">📌 사이트 구축을 필요로 하는 법률 관련 주체의 직접 의뢰로 판단됩니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="SNS마케팅" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-sns">SNS마케팅</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-normal dday-badge">D-9</span>
+</div>
+<div class="one-line-summary">IT제품 브랜드 SNS 마케팅 대행, 월 100~1000만</div>
+<div class="meta">🏭 IT제품  ·  💰 월간최소 100만원 ~ 최대 1,000만원  ·  📅 2026-07-22</div>
+<div class="detail-summary">IT제품 업종의 광고주가 전반적인 SNS 마케팅 운영 및 광고 대행사를 찾습니다. 예산 범위는 월 100만 원에서 1,000만 원으로 규모에 따른 유동적 계약이 예상됩니다. 마감 기한은 D-9일입니다.</div>
+<div class="poster-evidence">📌 제품 홍보를 위해 SNS 채널 운영 대행을 찾는 광고주의 전형적인 요청입니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="CPA·CPS" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-cpa">CPA·CPS</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-normal dday-badge">D-16</span>
+</div>
+<div class="one-line-summary">법률 사무소 고효율 CPA 성과형 마케팅 의뢰, 월 300~1000만</div>
+<div class="meta">🏭 법률  ·  💰 월간최소 300만원 ~ 최대 1,000만원  ·  📅 2026-07-22</div>
+<div class="detail-summary">법률 업종에서 DB 확보 및 성과 창출을 위한 CPA/CPS 마케팅 파트너를 모집합니다. 예산은 월 300만 원에서 1,000만 원 사이의 규모로 운영됩니다. 마감 기한은 D-16일입니다.</div>
+<div class="poster-evidence">📌 법률 시장 특성상 광고주가 직접 성과형 파트너를 구하는 경우가 많습니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="검색최적화·SEO" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-search">검색최적화·SEO</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-normal dday-badge">D-17</span>
+</div>
+<div class="one-line-summary">법률 업종 검색최적화(SEO) 전문 대행 의뢰, 월 200~1000만</div>
+<div class="meta">🏭 법률  ·  💰 월간최소 200만원 ~ 최대 1,000만원  ·  📅 2026-07-22</div>
+<div class="detail-summary">법률 서비스의 온라인 노출 확대를 위해 전문적인 검색최적화(SEO) 서비스를 요청하는 공고입니다. 월간 예산은 200만 원에서 1,000만 원 수준이며 기술적 SEO 및 콘텐츠 관리를 포함할 것으로 보입니다. 마감 기한은 D-17일입니다.</div>
+<div class="poster-evidence">📌 자사 서비스 노출을 위해 전문 기술 대행을 찾는 광고주로 판단됩니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+</div>
+</div><div class="section past-section">
+<div class="date-header">
+<span class="date-label">📅 2026-07-21 (화)</span>
+<div class="date-stats">
+<span class="stat-chip stat-total">총 9건</span>
+<span class="stat-chip stat-new">신규 9건</span>
+<span class="stat-chip stat-agency">대행사 0건</span>
+<span class="stat-chip stat-advertiser">광고주 9건</span>
+</div>
+</div>
+<div class="card-grid">
+<div class="card" data-category="통합광고대행" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-integrated">통합광고대행</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-urgent dday-badge">D-2</span>
+</div>
+<div class="one-line-summary">여행숙박 업종 통합광고대행 초기 파트너 모집, 월 10만 이상</div>
+<div class="meta">🏭 여행숙박  ·  💰 월간최소 10만원  ·  📅 2026-07-21</div>
+<div class="detail-summary">여행숙박 업종에서 다양한 채널을 아우르는 통합 광고 대행을 요청하고 있습니다. 월간 최소 예산 10만 원으로 명시되어 있어 소액 테스트 후 확장 가능성이 있는 초기 의뢰로 보입니다. 마감 기한은 D-2일로 매우 임박했습니다.</div>
+<div class="poster-evidence">📌 통합 대행 서비스를 찾는 브랜드의 직접 공고로 보입니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="CPA·CPS" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-cpa">CPA·CPS</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-normal dday-badge">D-30</span>
+</div>
+<div class="one-line-summary">기타 업종 CPA 성과 기반 마케팅 대행, 월 300만 고정</div>
+<div class="meta">🏭 기타  ·  💰 월간최소 300만원 ~ 최대 300만원  ·  📅 2026-07-21</div>
+<div class="detail-summary">특정 업종이 아닌 기타 분야에서 CPA/CPS 방식의 마케팅 대행을 의뢰하는 건입니다. 월간 300만 원의 예산이 책정되어 있으며 성과에 따른 정산 계약이 예상됩니다. 마감 기한은 D-30일로 한 달 정도의 여유가 있습니다.</div>
+<div class="poster-evidence">📌 예산과 성과 지표가 명확히 제시된 직접 마케팅 의뢰 건입니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="유튜브·영상·PPL" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-youtube">유튜브·영상·PPL</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-normal dday-badge">D-30</span>
+</div>
+<div class="one-line-summary">식/음료 영상 제작 및 유튜브 PPL 의뢰, 건당 20~35만</div>
+<div class="meta">🏭 식/음료  ·  💰 건당최소 20만원 ~ 최대 35만원  ·  📅 2026-07-21</div>
+<div class="detail-summary">식/음료 제품의 홍보를 위해 유튜브 채널 또는 영상 제작 대행을 찾고 있습니다. 건당 20만 원에서 35만 원 사이의 소액 예산으로 다수의 인플루언서 배포나 숏폼 제작이 예상됩니다. 마감 기한은 D-30일입니다.</div>
+<div class="poster-evidence">📌 구체적인 건당 비용을 제시하며 영상 마케팅을 원하는 광고주로 판단됩니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="기타" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-other">기타</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-normal dday-badge">D-30</span>
+</div>
+<div class="one-line-summary">일반소비재 종합 마케팅 대행 파트너 모집, 월 100~5000만</div>
+<div class="meta">🏭 일반소비재  ·  💰 월간최소 100만원 ~ 최대 5,000만원  ·  📅 2026-07-21</div>
+<div class="detail-summary">일반소비재(생활용품 등) 업종에서 대규모 마케팅 대행 서비스를 의뢰하는 공고입니다. 예산 범위가 월 100만 원에서 최대 5,000만 원까지로 매우 넓어 규모 있는 프로젝트가 될 가능성이 큽니다. 마감 기한은 D-30일입니다.</div>
+<div class="poster-evidence">📌 포괄적인 마케팅 서비스를 대규모 예산으로 집행하려는 브랜드사의 공고로 보입니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="앱·모바일" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-app">앱·모바일</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-urgent dday-badge">D-2</span>
+</div>
+<div class="one-line-summary">뷰티 브랜드 앱/모바일 특화 마케팅 대행, 월 50~200만</div>
+<div class="meta">🏭 뷰티  ·  💰 월간최소 50만원 ~ 최대 200만원  ·  📅 2026-07-21</div>
+<div class="detail-summary">뷰티 업종의 광고주가 앱 설치 또는 모바일 최적화 마케팅 서비스를 원하고 있습니다. 월간 50만 원에서 200만 원의 예산으로 모바일 타겟팅 광고 및 운영 대행을 요청합니다. 마감 기한은 D-2일입니다.</div>
+<div class="poster-evidence">📌 특정 매체(앱/모바일)를 타겟으로 마케팅을 의뢰하는 뷰티 브랜드로 판단됩니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="CPA·CPS" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-cpa">CPA·CPS</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-urgent dday-badge">D-2</span>
+</div>
+<div class="one-line-summary">인터넷서비스 CPA 성과형 마케팅 의뢰, 월 최대 1000만</div>
+<div class="meta">🏭 인터넷서비스  ·  💰 월간 ~ 최대 1,000만원  ·  📅 2026-07-21</div>
+<div class="detail-summary">인터넷서비스 분야에서 전환 성과를 목표로 하는 CPA/CPS 대행사를 모집합니다. 월간 최대 1,000만 원까지 예산 집행이 가능하며 성과 기반의 공격적인 마케팅이 예상됩니다. 마감 기한은 D-2일로 긴급한 건입니다.</div>
+<div class="poster-evidence">📌 성과형 마케팅 파트너를 직접 찾는 인터넷 서비스 기업으로 보입니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="SNS마케팅" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-sns">SNS마케팅</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-normal dday-badge">D-23</span>
+</div>
+<div class="one-line-summary">엔터테인먼트 업종 SNS 마케팅 대행, 월 300만 고정</div>
+<div class="meta">🏭 엔터테인먼트  ·  💰 월간최소 300만원 ~ 최대 300만원  ·  📅 2026-07-21</div>
+<div class="detail-summary">엔터테인먼트 산업 분야의 광고주가 SNS 채널 운영 및 마케팅 대행을 요청합니다. 월간 300만 원의 예산으로 정기적인 콘텐츠 발행 및 확산을 기대하고 있습니다. 마감 기한은 D-23일까지입니다.</div>
+<div class="poster-evidence">📌 엔터테인먼트 분야의 SNS 관리를 위한 직접 대행 의뢰입니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="유튜브·영상·PPL" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-youtube">유튜브·영상·PPL</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-urgent dday-badge">D-1</span>
+</div>
+<div class="one-line-summary">뷰티 브랜드 유튜브 영상 및 PPL 대행, 월 500~1000만</div>
+<div class="meta">🏭 뷰티  ·  💰 월간최소 500만원 ~ 최대 1,000만원  ·  📅 2026-07-21</div>
+<div class="detail-summary">뷰티 업종 브랜드에서 유튜브를 활용한 영상 마케팅 및 PPL 대행사를 찾습니다. 월 500만 원에서 1,000만 원 규모의 중량감 있는 예산이 투입될 예정입니다. 마감 기한은 D-1일로 매우 촉박합니다.</div>
+<div class="poster-evidence">📌 뷰티 제품 특성상 영상 마케팅 비중이 크며, 이를 직접 의뢰하는 브랜드사로 보입니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+<div class="card" data-category="상품 판매요청" data-new="false" data-poster="광고주">
+
+<div class="card-labels">
+<span class="badge cat-product">상품 판매요청</span>
+<span class="badge poster-advertiser">📢 광고주</span>
+<span class="badge dday-warning dday-badge">D-4</span>
+</div>
+<div class="one-line-summary">식/음료 제품 유통 및 판매 대행 요청, 월 10만 이상</div>
+<div class="meta">🏭 식/음료  ·  💰 월간최소 10만원  ·  📅 2026-07-21</div>
+<div class="detail-summary">식/음료 제품의 판매 활성화를 위한 상품 판매 요청 및 마케팅 의뢰입니다. 예산은 월간 최소 10만 원으로 기재되어 있으나 성과 기반의 수수료 계약 가능성이 높습니다. 마감 기한은 D-4일입니다.</div>
+<div class="poster-evidence">📌 자사 상품의 판매 채널 확장 및 마케팅을 의뢰하는 제조/유통 광고주로 판단됩니다.</div>
+<div class="card-footer">
+<a class="btn-link" href="https://www.i-boss.co.kr/ab-1957" rel="noopener" target="_blank">원문 보러가기 →</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<footer class="site-footer">
+  Powered by Einvention
+</footer>
+<script>
+  (function() {
+    const state = { category: '__ALL__', poster: '__ALL__', newOnly: false };
+    const grid = document.getElementById('card-grid');
+    const cards = Array.from(grid.querySelectorAll('.card'));
+    const emptyState = document.getElementById('empty-state');
+
+    function apply() {
+      let visible = 0;
+      cards.forEach(card => {
+        const cat  = card.getAttribute('data-category');
+        const pst  = card.getAttribute('data-poster');
+        const isNew = card.getAttribute('data-new') === 'true';
+
+        const okCat    = state.category === '__ALL__' || cat === state.category;
+        const okPoster = state.poster   === '__ALL__' || pst === state.poster;
+        const okNew    = !state.newOnly || isNew;
+
+        const show = okCat && okPoster && okNew;
+        card.hidden = !show;
+        if (show) visible++;
+      });
+      emptyState.classList.toggle('visible', visible === 0);
+    }
+
+    // 카테고리 필터
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.category = btn.getAttribute('data-value');
+        apply();
+      });
+    });
+
+    // 작성자 필터
+    document.querySelectorAll('.poster-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.poster-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.poster = btn.getAttribute('data-value');
+        apply();
+      });
+    });
+
+    // NEW만 보기 토글
+    const newBtn = document.querySelector('.new-btn');
+    if (newBtn) {
+      newBtn.addEventListener('click', () => {
+        state.newOnly = !state.newOnly;
+        newBtn.classList.toggle('active', state.newOnly);
+        apply();
+      });
+    }
+
+    apply();
+  })();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79"}' crossorigin="anonymous"></script>
+</body>
+</html>
